@@ -60,7 +60,7 @@ int main(void) {
     DDRC = 0xFF; PORTC = 0x00;
     DDRD = 0xFF; PORTD = 0x00;
 
-    static task task;
+    static task task1;
     task *tasks[] = { &task1 };
     const unsigned short numTasks = sizeof(tasks)/sizeof(task*);
 
@@ -74,15 +74,13 @@ int main(void) {
         GCD = findGCD(GCD, tasks[i]->period);
     }
 
+    LCD_init();
+
     TimerSet(GCD);
     TimerOn();
     
-    LCD_init();
-
-    unsigned short i;
-
     while (1) {
-        for(i = 0; i < numTasks; i++) {
+        for(unsigned short i = 0; i < numTasks; i++) {
             if(tasks[i]->elapsedTime == tasks[i]->period) {
                 tasks[i]->state = tasks[i]->TickFct(tasks[i]->state);
                 tasks[i]->elapsedTime = 0;
