@@ -65,7 +65,7 @@ int main(void) {
     const unsigned short numTasks = sizeof(tasks)/sizeof(task*);
 
     task1.state = lcd_start;
-    task1.period = 50;
+    task1.period = 500;
     task1.elapsedTime = task1.period;
     task1.TickFct = &lcdSMTick;
 
