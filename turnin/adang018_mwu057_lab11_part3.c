@@ -12,6 +12,7 @@
 #include "scheduler.h"
 #include "timer.h"
 #include "keypad.h"
+#include "io.h"
 
 #ifdef _SIMULATE_
 #include "simAVRHeader.h"
@@ -30,7 +31,8 @@ int keypad_SMTick(int state) {
     switch(state) {
         case keypad_start: break;
         case keypad_press:
-            switch(GetKeypadKey()) {
+            unsigned char x = GetKeypadKey();
+            switch(x) {
                 case '\0': break;
                 case '1': curChar = '1'; break;
                 case '2': curChar = '2'; break;
@@ -75,7 +77,7 @@ int lcdSMTick(int state) {
 
 int main(void) {
     DDRA = 0xFF; PORTA = 0x00;
-    DDRB = 0xFF; PORTB = 0x00;
+    DDRD = 0xFF; PORTD = 0x00;
     DDRC = 0xF0; PORTC = 0x0F;
 
     static task task1, task2;
@@ -93,8 +95,9 @@ int main(void) {
     task2.TickFct = &lcdSMTick;
 
     unsigned long GCD = tasks[0]->period;
-    for(int i = 1; i < numTasks; i++) {
-        GCD = findGCD(GCD, tasks[i]->period);
+    unsigned short j;
+    for(j = 1; j < numTasks; j++) {
+        GCD = findGCD(GCD, tasks[j]->period);
     }
 
     LCD_init();
@@ -102,13 +105,14 @@ int main(void) {
     TimerSet(GCD);
     TimerOn();
     
+    unsigned short i;
     while (1) {
-        for(unsigned short i = 0; i < numTasks; i++) {
+        for(i = 0; i < numTasks; i++) {
             if(tasks[i]->elapsedTime == tasks[i]->period) {
                 tasks[i]->state = tasks[i]->TickFct(tasks[i]->state);
                 tasks[i]->elapsedTime = 0;
             }
-            tasks[i]->elapsedTime += 10;
+            tasks[i]->elapsedTime += GCD;
         }
         while(!TimerFlag);
         TimerFlag = 0;
