@@ -12,6 +12,7 @@
 #include "scheduler.h"
 #include "timer.h"
 #include "keypad.h"
+#include "io.h"
 
 #ifdef _SIMULATE_
 #include "simAVRHeader.h"
@@ -19,8 +20,10 @@
 
 const unsigned char numOpenChar = 16;
 const char* message = "CS120B is Legend... wait for it DARy!";
-char[numOpenChar*2 + strlen(message) + 1] new_message;
-char[numOpenChar + 1] display_message;
+// unsigned char new_message_len = numOpenChar*2 + strlen(message) + 1;
+// unsigned char display_message_len = numOpenChar + 1;
+char new_message[70];
+char display_message[17];
 unsigned char j;
 
 enum lcd_States { lcd_start, lcd_init, lcd_display };
@@ -29,7 +32,7 @@ int lcdSMTick(int state) {
     switch(state) {
         case lcd_start: state = lcd_init; break;
         case lcd_init: state = lcd_display; break;
-        case lcd_display: state = lcd_display: break;
+        case lcd_display: state = lcd_display; break;
         default: state = lcd_start; break;
     }
     switch(state) {
@@ -41,9 +44,9 @@ int lcdSMTick(int state) {
             memset(new_message + numOpenChar + strlen(message), ' ', numOpenChar);
             new_message[numOpenChar*2 + strlen(message)] = '\0'; 
             break;
-        case lcd_display;
-            if(j <= numOpenChar + strlen(message) {
-                memcpy(display_message, new_message + i, numOpenChar);
+        case lcd_display:
+            if(j <= numOpenChar + strlen(message)) {
+                memcpy(display_message, new_message + j, numOpenChar);
                 new_message[numOpenChar] = '\0'; 
                 j++;
             } else {
@@ -54,6 +57,7 @@ int lcdSMTick(int state) {
     }
     
     LCD_DisplayString(1, display_message);  
+    return state;
 }
 
 int main(void) {
@@ -70,8 +74,9 @@ int main(void) {
     task1.TickFct = &lcdSMTick;
 
     unsigned long GCD = tasks[0]->period;
-    for(int i = 1; i < numTasks; i++) {
-        GCD = findGCD(GCD, tasks[i]->period);
+    unsigned char k;
+    for(k = 1; k < numTasks; k++) {
+        GCD = findGCD(GCD, tasks[k]->period);
     }
 
     LCD_init();
@@ -79,8 +84,9 @@ int main(void) {
     TimerSet(GCD);
     TimerOn();
     
+    unsigned short i;
     while (1) {
-        for(unsigned short i = 0; i < numTasks; i++) {
+        for(i = 0; i < numTasks; i++) {
             if(tasks[i]->elapsedTime == tasks[i]->period) {
                 tasks[i]->state = tasks[i]->TickFct(tasks[i]->state);
                 tasks[i]->elapsedTime = 0;
